@@ -1,4 +1,6 @@
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 from smtplib import SMTP
 
@@ -19,7 +21,6 @@ for filename in Path(".").rglob("*.pem"):
         data_certificado = datetime.strptime(timestamp, '%Y%m%d%H%M%S%z').date()
         data_atual = datetime.now().date()
         emitir_aviso = (data_certificado - data_atual).days < dias_aviso
-        print(emitir_aviso)
 
         if emitir_aviso:
             sender = "from@example.com"
@@ -27,7 +28,14 @@ for filename in Path(".").rglob("*.pem"):
 
             message = "Hello World!"
 
-            with SMTP("host", 0000) as server:
+            msg = MIMEMultipart()
+            msg['From'] = sender
+            msg['To'] = receiver
+            msg['Subject'] = assunto
+
+            msg.attach(MIMEText(message, 'plain'))
+
+            with SMTP(host="sandbox.smtp.example.io", port=2525) as server:
                 server.starttls()
                 server.login("user", "password")
-                server.sendmail(sender, receiver, message)
+                server.sendmail(sender, receiver, msg.as_string())
